@@ -1,0 +1,75 @@
+name: Windows Release Build
+on:
+  push: 
+    tags: 
+    - "*"
+jobs:
+  build-win64:
+    name: Build Win64 package
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        architecture: ["x86", "x64"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v4 
+      with:
+        python-version: ${{matrix.python-version}}
+        architecture: ${{matrix.architecture}}
+    - name: Checking python distrubution structure ...
+      run: |
+        where python
+        $CIPHEY_CORE_PYTHON=(Split-Path -Parent (Get-Command python.exe).Path)
+        echo "CIPHEY_CORE_PYTHON: $CIPHEY_CORE_PYTHON"
+        dir $CIPHEY_CORE_PYTHON
+        dir $CIPHEY_CORE_PYTHON/include
+        dir $CIPHEY_CORE_PYTHON/libs
+    - name: Install dependencies
+      run: |
+        choco upgrade chocolatey -y
+        # The version of MSVC tool is 14.3 in VS 2022 in windows-latest currently
+        choco install swig boost-msvc-14.3 -y
+    - name: Install required python build tools
+      run: |
+        python -m pip install poetry auditwheel setuptools
+    - name: Do build
+      run: |
+        python -V
+        mkdir build && cd build
+        # Here we use Split-Path and Get-Command to replace dirname of *nix behavior
+        $CIPHEY_CORE_PYTHON=(Split-Path -Parent (Get-Command python.exe).Path)
+        # Convert backslash to normal slash due to backslash is alwasy syntax error in cmake
+        $CIPHEY_CORE_PYTHON=($CIPHEY_CORE_PYTHON -replace '\\', '/')
+        echo "CIPHEY_CORE_PYTHON: $CIPHEY_CORE_PYTHON"
+        $arch="${{matrix.architecture}}"
+        echo "building for $arch ..."
+        if ($arch -eq "x86") {
+          # IMPORTANT!!! =$CIPHEY_CORE_PYTHON not expand in powershell
+          powershell "cmake .. -DCIPHEY_CORE_TEST=OFF -DCIPHEY_CORE_PYTHON=$CIPHEY_CORE_PYTHON -A Win32"
+          # cmake .. -DCIPHEY_CORE_TEST=OFF -A Win32
+          cmake --build . --config Release
+        }
+        else {
+          powershell "cmake .. -DCIPHEY_CORE_TEST=OFF -DCIPHEY_CORE_PYTHON=$CIPHEY_CORE_PYTHON -A x64"
+          # cmake .. -DCIPHEY_CORE_TEST=OFF -A x64
+          cmake --build . --config Release
+        }
+    - name: Create python package
+      run: |
+        cd build
+        python -m poetry build
+    - name: Upload to release
+      uses: xresloader/upload-to-github-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.tag_short_version }}
+        file: |-
+          build/dist/*.whl
+        tags: true
+        draft: false
+        overwrite: true
