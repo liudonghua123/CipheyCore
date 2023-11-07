@@ -48,14 +48,9 @@ jobs:
         # Failed now on ubuntu 20.04, skip?
         # cannot repair "dist/cipheycore-0.3.2-cp310-cp310-manylinux_2_31_x86_64.whl" to "manylinux_2_5_x86_64" ABI because of the presence of too-recent versioned symbols. You'll need to compile the wheel on an older toolchain.
         # python -m auditwheel repair dist/*.whl
-    - uses: xresloader/upload-to-github-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        tag_name: ${{ github.event.inputs.tag_short_version }}
-        file: |-
+        files: |
           build/dist/*.whl
-        tags: true
-        draft: false
-        overwrite: true
-

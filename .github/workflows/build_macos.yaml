@@ -44,13 +44,9 @@ jobs:
         cd build
         python -V
         python -m poetry build
-    - uses: xresloader/upload-to-github-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        tag_name: ${{ github.event.inputs.tag_short_version }}
-        file: |-
+        files: |
           build/dist/*.whl
-        tags: true
-        draft: false
-        overwrite: true
