@@ -6,8 +6,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # https://cmake.org/cmake/help/latest/policy/CMP0167.html
 # https://chatgpt.com/c/6715b494-6884-8005-9a9b-870e72427fe4
-cmake_policy(SET CMP0167 OLD)
-find_package(Boost REQUIRED COMPONENTS)
+# cmake_policy(SET CMP0167 OLD)
+# Need to update the boost version according to https://community.chocolatey.org/packages/boost-msvc-14.3#versionhistory
+# set(BOOST_ROOT C:/local/boost_1_86_0)
+find_package(Boost CONFIG)
 
 file(GLOB_RECURSE ciphey_core_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(ciphey_core ${ciphey_core_SOURCES})
