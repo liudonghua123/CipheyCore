@@ -4,6 +4,9 @@ project(CipheyCore VERSION 0.3.2)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# https://cmake.org/cmake/help/latest/policy/CMP0167.html
+# https://chatgpt.com/c/6715b494-6884-8005-9a9b-870e72427fe4
+cmake_policy(SET CMP0167 OLD)
 find_package(Boost REQUIRED COMPONENTS)
 
 file(GLOB_RECURSE ciphey_core_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
